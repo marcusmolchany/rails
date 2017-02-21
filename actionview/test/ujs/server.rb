@@ -1,3 +1,4 @@
+require "rack"
 require "rails"
 require "action_controller/railtie"
 require "action_view/railtie"
@@ -103,3 +104,4 @@ end
 
 Blade.initialize!
 UJS::Server.initialize!
+Rack::Server.start app: Rails.application, Port: 4567

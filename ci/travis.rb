@@ -24,7 +24,8 @@ class Build
     "av"       => "actionview",
     "aj"       => "activejob",
     "ac"       => "actioncable",
-    "guides"   => "guides"
+    "guides"   => "guides",
+    "ujs"      => "rails-ujs"
   }
 
   attr_reader :component, :options
@@ -36,11 +37,17 @@ class Build
 
   def run!(options = {})
     self.options.update(options)
-    Dir.chdir(dir) do
-      announce(heading)
-      if guides?
+
+    announce(heading)
+
+    if guides?
+      Dir.chdir(dir) do
         run_bug_report_templates
-      else
+      end
+    elsif ujs?
+      run_rails_ujs_script
+    else
+      Dir.chdir(dir) do
         rake(*tasks)
       end
     end
@@ -92,6 +99,10 @@ class Build
     gem == "guides"
   end
 
+  def ujs?
+    gem == "rails-ujs"
+  end
+
   def isolated?
     options[:isolated]
   end
@@ -134,6 +145,10 @@ class Build
       system(Gem.ruby, "-w", file)
     end
   end
+
+  def run_rails_ujs_script
+    system("ci/ujsbuild")
+  end
 end
 
 if ENV["GEM"] == "aj:integration"
@@ -151,6 +166,7 @@ ENV["GEM"].split(",").each do |gem|
     next if gem == "ac:integration" && isolated
     next if gem == "aj:integration" && isolated
     next if gem == "guides" && isolated
+    next if gem == "ujs" && isolated
 
     build = Build.new(gem, isolated: isolated)
     results[build.key] = build.run!
